@@ -10,6 +10,7 @@ PORT = 50500
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(10)
+print(f"Server listening on {HOST}:{PORT}")
 
 conn, addr = s.accept()
 print(f"Connected by {addr}")
@@ -29,11 +30,13 @@ while True:
 
     own_video_encode = cv2.imencode('.jpg', own_video)[1].tobytes()
     data_length = len(own_video_encode)
-    
+
     # 데이터 길이를 먼저 전송
     conn.sendall(data_length.to_bytes(4, 'big'))
     # 실제 이미지 데이터를 전송
     conn.sendall(own_video_encode)
+
+    print(f"Sent frame size: {data_length}")
 
     # 비디오 데이터 수신
     data_length = int.from_bytes(conn.recv(4), 'big')
@@ -48,24 +51,9 @@ while True:
         print("No data received")
         continue
 
-    # 디버깅을 위한 수신 데이터 크기 출력
     print(f"Received data size: {len(Video_Receive)}")
 
     # 수신 데이터를 배열로 변환
     Video_Receive_in_array = np.frombuffer(Video_Receive, np.uint8)
     
     # 이미지 디코딩
-    Other_laptop_video = cv2.imdecode(Video_Receive_in_array, cv2.IMREAD_COLOR)
-    
-    if Other_laptop_video is not None and Other_laptop_video.size > 0:
-        # 디버깅을 위한 이미지 크기 출력
-        print(f"Received video frame size: {Other_laptop_video.shape}")
-        cv2.imshow('Linux', Other_laptop_video)
-    else:
-        print("Received an empty or invalid image")
-
-    if cv2.waitKey(10) == 13:
-        break
-
-cv2.destroyAllWindows()
-capture.release()
